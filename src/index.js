@@ -3,17 +3,18 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 import connectDB from "./db/index.js";
-connectDB().then(()=>{
-  app.listen(process.env.PORT||8000,()=>{
-    console.log(`Server is running at port${process.env.PORT}`);
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+      console.log(`Server is running at port${process.env.PORT}`);
+    });
+    app.on("error", (error) => {
+      console.log("Serever connection error", error);
+    });
   })
-  app.on("error",(error)=>{
-    console.log("Serever connection error",error);
-  })
-})
-.catch((err)=>{
-  console.log('DB connection error ',err);
-})
+  .catch((err) => {
+    console.log("DB connection error ", err);
+  });
 /*
 
 import express from "express"
