@@ -13,15 +13,21 @@ const uploadOnCloudinary = async (localFilepath) => {
       resource_type: "auto",
     });
     console.log("file upload to cloud:", response.url);
-    // if (fs.existsSync(localFilepath)) {
-    //   fs.unlinkSync(localFilepath);
-    // }
-    fs.unlinkSync(localFilepath);
+    if (fs.existsSync(localFilepath)) {
+      fs.unlinkSync(localFilepath);
+    }
+    // fs.unlinkSync(localFilepath);
 
     //file has been uploaded
-    console.log("fil hasd been uploaded successfully", response.url);
+    // console.log(
+    //   "fil hasd return responsebeen uploaded successfully",
+    //   response.url
+    // );
+    
     return response;
   } catch (error) {
+    console.error("!!! CLOUDINARY ERROR!!", error);
+
     if (fs.existsSync(localFilepath)) {
       fs.unlinkSync(localFilepath);
     }
