@@ -102,7 +102,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     $or: [{ username }, { email }],
   });
-  if (!username) {
+  if (!user) {
     throw new ApiError(404, "User doesnot exists");
   }
   const isPasswordvalid = await user.isPasswordCorrect(password);
@@ -196,4 +196,4 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
-export { registerUser, loginUser, logoutUser,refreshAccessToken };
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
