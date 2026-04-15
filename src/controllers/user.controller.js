@@ -8,8 +8,8 @@ import mongoose from "mongoose";
 const generateAccessandRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
@@ -142,7 +142,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     req.user._id,
     {
       $set: {
-        refreshToken: undefined,
+        refreshToken: 1,
       },
     },
     {
@@ -159,10 +159,13 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "Logout successfully"));
 });
+
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "Unauthorized Request");
+    throw new ApiError(401, "Unauthorized new token Request");
   }
   try {
     const decodedToken = jwt.verify(
@@ -176,12 +179,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "user access denied");
     }
+
+    const { accessToken, newrefreshToken } =
+      await generateAccessandRefreshToken(user._id);
     const options = {
       httpOnly: true,
       secure: true,
     };
-    const { accessToken, newrefreshToken } =
-      await generateAccessandRefreshToken(user._id);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -292,7 +296,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     {
       $match: {
         username: username?.toLowerCase(),
-      },
+      }
     },
     {
       $lookup: {
@@ -300,7 +304,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "channel",
         as: "subscribers",
-      },
+      }
     },
     {
       $lookup: {
@@ -308,7 +312,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "subscriber",
         as: "subscribed",
-      },
+      }
     },
     {
       $addFields: {
@@ -319,15 +323,15 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
           $size: "$subscribed",
         },
         isSubscribed: {
-          $condition: {
+          $cond: {
             if: {
               $in: [req.user?._id, "$subscribers.subscriber"],
             },
             then: true,
             else: false,
-          },
-        },
-      },
+          }
+        }
+      }
     },
     {
       $project: {
@@ -340,8 +344,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         coverImage: 1,
         email: 1,
         email: 1,
-      },
-    },
+      }
+    }
   ]);
   if (!channel?.length) {
     throw new ApiError(404, "channel doesnot exist");
@@ -356,7 +360,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: new mongoose.Schema.Types.ObjectId(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
     {
@@ -378,22 +382,23 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                     fullName: 1,
                     username: 1,
                     avatar: 1,
-                  },
-                },
-              ],
-            },
+                  }
+                }
+              ]
+            }
           },
           {
             $addFields: {
               owner: {
                 $first: "$owner",
-              },
-            },
-          },
-        ],
-      },
-    },
+              }
+            }
+          }
+        ]
+      }
+    }
   ]);
+  const watchHistory = user[0]?.watchHistory || [];
   return res
     .status(200)
     .json(
