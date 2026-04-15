@@ -296,7 +296,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     {
       $match: {
         username: username?.toLowerCase(),
-      }
+      },
     },
     {
       $lookup: {
@@ -304,7 +304,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "channel",
         as: "subscribers",
-      }
+      },
     },
     {
       $lookup: {
@@ -312,7 +312,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "subscriber",
         as: "subscribed",
-      }
+      },
     },
     {
       $addFields: {
@@ -329,9 +329,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             },
             then: true,
             else: false,
-          }
-        }
-      }
+          },
+        },
+      },
     },
     {
       $project: {
@@ -344,8 +344,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         coverImage: 1,
         email: 1,
         email: 1,
-      }
-    }
+      },
+    },
   ]);
   if (!channel?.length) {
     throw new ApiError(404, "channel doesnot exist");
@@ -382,21 +382,21 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                     fullName: 1,
                     username: 1,
                     avatar: 1,
-                  }
-                }
-              ]
-            }
+                  },
+                },
+              ],
+            },
           },
           {
             $addFields: {
               owner: {
                 $first: "$owner",
-              }
-            }
-          }
-        ]
-      }
-    }
+              },
+            },
+          },
+        ],
+      },
+    },
   ]);
   const watchHistory = user[0]?.watchHistory || [];
   return res
